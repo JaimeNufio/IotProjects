@@ -6,10 +6,10 @@ const port = 3000;
 
 // Configure the connection to your PostgreSQL server
 const pool = new Pool({
-  user: 'your_username',
-  host: 'localhost',
-  database: 'your_database_name',
-  password: 'your_password',
+  user: 'postgres',
+  host: '192.168.1.156',
+  database: 'IoT',
+  password: 'postgres',
   port: 9856,
 });
 
