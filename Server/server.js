@@ -23,7 +23,7 @@ async function connectToPGServer() {
 
 connectToPGServer();
 
-async function recordInteraction(name) {
+async function recordInteraction(res,name) {
   console.log("adding timestamp from device",name)
   try {
 
@@ -38,16 +38,16 @@ async function recordInteraction(name) {
     await client.query(insertQuery, values);
     client.release();
 
-    res.send("created Interaction for",req.query.name);
+    res.send("created Interaction for "+name);
 
   } catch (err) {
     console.error('Error occurred:', err);
-    res.status(400).send("Error during interaction for device",name);
+    // res.status(400).send("Error during interaction for device, "+name);
   }
 }
 
 app.get('/interact', (req, res) => {
-  recordInteraction(req.query.name)
+  recordInteraction(res, req.query.name)
 });
 
 app.listen(port, () => {
