@@ -59,22 +59,55 @@ void sendRequest(){
   }
 }
 
+bool isDown = false;
+bool millisLast = 0;
+
+void ButtonDown(){
+
+  int sensorVal = digitalRead(2);
+
+  if (isDown == false && sensorVal == 0){
+    Serial.println("Button Down");
+    isDown = true;
+    if (millis - millisLast > 5000){
+      Serial.println("")
+      millisLast = 0;
+    }
+  }else if (sensorVal == 1 && isDown == true){
+    Serial.println("Button Released");
+    isDown = false;
+  }else if (sensorVal == 0 && isDown == true){
+    Serial.println("Button Remains Down");
+  }else{
+    Serial.println("Button idle");
+  }
+
+  
+}
+
 void setup() {
+  pinMode(2, INPUT_PULLUP);
   Serial.begin(115200);
   connectToWifi();
+  millisLast = millis()
 }
 
 void loop() {
- 
-  checkConnectionAndSend();
 
-  Serial.print("\n[STANDBY] Waiting to re-ping");
-  for (uint8_t t = 5; t > 0; t--) {
-    Serial.printf(".");
-    delay(1000);
-  }
-  Serial.println();
-  Serial.flush();
+  delay(200);
+  ButtonDown();
+
+ 
+  // checkConnectionAndSend();
+
+
+  // Serial.print("\n[STANDBY] Waiting to re-ping");
+  // for (uint8_t t = 5; t > 0; t--) {
+  //   Serial.printf(".");
+  //   delay(1000);
+  // }
+  // Serial.println();
+  // Serial.flush();
 }
 
 //References:
