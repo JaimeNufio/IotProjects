@@ -3,8 +3,21 @@
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
+#include "ssd1306.h"
+#include "nano_gfx.h"
+// #include "sova.h"
 
 ESP8266WiFiMulti WiFiMulti;
+
+void setupLCD(){
+    ssd1306_setFixedFont(ssd1306xled_font6x8);
+    ssd1306_128x64_i2c_init();
+    ssd1306_clearScreen();
+}
+
+void displayText(const char *str){
+
+}
 
 void checkConnectionAndSend(){
   if ((WiFiMulti.run() == WL_CONNECTED)) {
@@ -60,55 +73,56 @@ void sendRequest(){
 }
 
 bool isDown = false;
-bool millisLast = 0;
+unsigned int lastPressed = 0;
+unsigned int checked = 0;
 
 void ButtonDown(){
 
   int sensorVal = digitalRead(2);
+  checked++;
 
   if (isDown == false && sensorVal == 0){
+
+    if (millis() - lastPressed < 5000){
+     if (checked%2000==0){
+      Serial.println("Too fast.");
+    }
+      return;
+    }
+
+    checked = 0;
     Serial.println("Button Down");
     isDown = true;
-    if (millis - millisLast > 5000){
-      Serial.println("")
-      millisLast = 0;
-    }
+    lastPressed = millis();
+
   }else if (sensorVal == 1 && isDown == true){
-    Serial.println("Button Released");
+    Serial.println("\nButton Released");
+
     isDown = false;
   }else if (sensorVal == 0 && isDown == true){
-    Serial.println("Button Remains Down");
+    if (checked%200==0){
+      Serial.print(".");
+    }if (checked%1000==0){
+      Serial.println("");
+    }
   }else{
-    Serial.println("Button idle");
+    // Serial.println("Button idle");
   }
 
   
 }
 
 void setup() {
-  pinMode(2, INPUT_PULLUP);
+  pinMode(D4, INPUT_PULLUP); //D4
   Serial.begin(115200);
   connectToWifi();
-  millisLast = millis()
+  lastPressed = millis();
 }
 
 void loop() {
 
-  delay(200);
+  // delay(200);
   ButtonDown();
 
  
-  // checkConnectionAndSend();
-
-
-  // Serial.print("\n[STANDBY] Waiting to re-ping");
-  // for (uint8_t t = 5; t > 0; t--) {
-  //   Serial.printf(".");
-  //   delay(1000);
-  // }
-  // Serial.println();
-  // Serial.flush();
 }
-
-//References:
-// https://randomnerdtutorials.com/esp8266-nodemcu-http-get-post-arduino/#http-get-1
