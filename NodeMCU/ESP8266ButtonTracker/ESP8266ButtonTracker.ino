@@ -15,9 +15,6 @@ void setupLCD(){
     ssd1306_clearScreen();
 }
 
-void displayText(const char *str){
-
-}
 
 void checkConnectionAndSend(){
   if ((WiFiMulti.run() == WL_CONNECTED)) {
@@ -62,7 +59,7 @@ void sendRequest(){
 
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
         String payload = http.getString();
-        Serial.printf("\n[PAYLOAD] %s",payload.c_str());
+        Serial.printf("\n[PAYLOAD] %d\n\n",atoi(payload.c_str()));
       }
     } else {
       Serial.printf("\n[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
@@ -91,6 +88,7 @@ void ButtonDown(){
     }
 
     checked = 0;
+    checkConnectionAndSend();
     Serial.println("Button Down");
     isDown = true;
     lastPressed = millis();

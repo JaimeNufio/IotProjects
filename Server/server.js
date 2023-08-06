@@ -38,7 +38,7 @@ async function recordInteraction(res,name) {
     await client.query(insertQuery, values);
     client.release();
 
-    res.send("created Interaction for "+name);
+    res.send(`${Math.floor(Date.now() / 1000)}`);
 
   } catch (err) {
     console.error('Error occurred:', err);
