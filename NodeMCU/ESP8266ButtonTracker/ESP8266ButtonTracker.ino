@@ -7,10 +7,6 @@
 #include <WiFiClient.h>
 #include "ssd1306.h"
 #include "nano_gfx.h"
-// #include "sova.h"
-
-ESP8266WiFiMulti WiFiMulti;
-
 
 bool isDown = false;
 unsigned int lastPressed = 0;
@@ -18,13 +14,17 @@ unsigned int checked = 0;
 unsigned int currentTimestamp = 0;
 unsigned int lastInteractionTimestamp = 0;
 
+// wifi connections
+WiFiClient client;
+HTTPClient http;
+ESP8266WiFiMulti WiFiMulti;
+String serverName = "http://192.168.1.158:3000"; // the node server. 
+
+// wifi, but for getting time from NTP server
 const char* ntpServer = "pool.ntp.org";
 const int timeZone = 0;  // -5 for Eastern Standard Time (EST)
 WiFiUDP udp;
 NTPClient timeClient(udp, ntpServer, timeZone, 0);
-WiFiClient client;
-HTTPClient http;
-String serverName = "http://192.168.1.158:3000"; // the node server. 
 
 // interval information for getting the time again.
 const unsigned long interval = 15000;  // 3 seconds in milliseconds
@@ -44,8 +44,8 @@ unsigned long getNtpTime(){
 void setupLCD(){
   ssd1306_128x64_i2c_init();
   ssd1306_setFixedFont(ssd1306xled_font6x8);
-  canvas.fillRect(0, 7, 128, 7, 0xFF);
-  canvas.fillRect(0, 10, 128, 10, 0xFF);
+  canvas.fillRect(0, 5, 128, 5, 0xFF);
+  canvas.fillRect(0, 8, 128, 8, 0xFF);
   canvas.fillRect(0, 15, 128, 15, 0xFF);
   canvas.blt(0,0);
   canvas.printFixed(20, 3, " WATER TRACKER ", STYLE_BOLD );
@@ -223,10 +223,10 @@ void updateTimeDisplay(int num){
   }else if (num < 60*60){ //less than an hour
     strcpy(text," Minutes Ago");
     effectiveNum = trunc(num/60);
-  }else if (num < 60*60*24){
+  }else if (num < 60*60*24){ // less than a day
     strcpy(text," Hours Ago");
     effectiveNum = trunc(num/60/60);
-  }else{
+  }else{  // days.
     strcpy(text," Days Ago");
     effectiveNum = trunc(num/60/60/24);
   }
@@ -264,7 +264,6 @@ void setup() {
 
   canvas.fillRect(0,36, 128, 64, 0x0);
   ssd1306_setFixedFont(ssd1306xled_font8x16);
-  // canvas.printFixed(10, 36, numStr, STYLE_BOLD );
   canvas.blt(0,0);
 }
 

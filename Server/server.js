@@ -61,14 +61,13 @@ async function recallInteraction(res,name){
     `;
 
     const result = await client.query(query)
-    console.log("raw results",result.rows)
 
     if (result.rows.length > 0) {
       const row = result.rows[0]
-      console.log(row.unix_timestamp)
+      console.log('Most Recent Timestamp found:',row.unix_timestamp)
       res.send(`${row.unix_timestamp}`)
     } else {
-      console.log('no rows yet.')
+      console.log('no rows yet, just sending 0.')
       res.send('0')
     }
   } catch (error) {
@@ -77,10 +76,6 @@ async function recallInteraction(res,name){
     client.release();
   }
 };
-
-
-
-
 
 // button pressed, record the interaction and return back the time stamp
 app.get('/interact', (req, res) => {
