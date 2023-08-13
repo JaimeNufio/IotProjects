@@ -53,7 +53,7 @@ async function recallInteraction(res,name){
   try {
     values = [name]
     const query = `
-      SELECT EXTRACT(EPOCH FROM "time" AT TIME ZONE 'UTC') AS unix_timestamp
+      SELECT EXTRACT(EPOCH FROM "time" AT TIME ZONE 'UTC')::integer AS unix_timestamp
       FROM timekeep
       WHERE NAME = '${values[0]}'
       ORDER BY id DESC
@@ -61,15 +61,15 @@ async function recallInteraction(res,name){
     `;
 
     const result = await client.query(query)
-
+    console.log("raw results",result.rows)
 
     if (result.rows.length > 0) {
       const row = result.rows[0]
       console.log(row.unix_timestamp)
-      res.send(result.unix_timestamp);
+      res.send(`${row.unix_timestamp}`)
     } else {
-      console.log(0);
-      res.send(0)
+      console.log('no rows yet.')
+      res.send('0')
     }
   } catch (error) {
     console.error('Error executing query:', error);
