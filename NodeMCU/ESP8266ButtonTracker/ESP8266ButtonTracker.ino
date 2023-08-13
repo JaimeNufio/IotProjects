@@ -48,7 +48,9 @@ void setupLCD(){
   canvas.fillRect(0, 8, 128, 8, 0xFF);
   canvas.fillRect(0, 15, 128, 15, 0xFF);
   canvas.blt(0,0);
-  canvas.printFixed(20, 3, " WATER TRACKER ", STYLE_BOLD );
+    
+  int paddingLeft = (128-strlen(" WATER TRACKER ")*6 ) / 2;
+  canvas.printFixed(paddingLeft, 3, " WATER TRACKER ", STYLE_BOLD );
   ssd1306_setFixedFont(ssd1306xled_font6x8);
   canvas.printFixed(0, 20, "Last Pressed:", STYLE_NORMAL );
   canvas.blt(0,0);
@@ -160,12 +162,12 @@ void ButtonDown(){
 
     checked = 0;
     checkConnectionAndSendInteraction();
-    Serial.println("Button Down");
+    // Serial.println("Button Down");
     isDown = true;
     lastPressed = millis();
 
   }else if (sensorVal == 1 && isDown == true){
-    Serial.println("\nButton Released");
+    // Serial.println("\nButton Released");
 
     isDown = false;
   }else if (sensorVal == 0 && isDown == true){
@@ -221,14 +223,26 @@ void updateTimeDisplay(int num){
     strcpy(text," Seconds Ago");
     effectiveNum = num;
   }else if (num < 60*60){ //less than an hour
-    strcpy(text," Minutes Ago");
     effectiveNum = trunc(num/60);
+    if (effectiveNum == 1){
+      strcpy(text," Minute Ago");
+    }else{
+      strcpy(text," Minutes Ago");
+    }
   }else if (num < 60*60*24){ // less than a day
-    strcpy(text," Hours Ago");
     effectiveNum = trunc(num/60/60);
+    if (effectiveNum == 1){
+      strcpy(text," Hour Ago");
+    }else{
+      strcpy(text," Hour Ago");
+    }
   }else{  // days.
-    strcpy(text," Days Ago");
     effectiveNum = trunc(num/60/60/24);
+    if (effectiveNum == 1){
+      strcpy(text," Day Ago");
+    }else{
+      strcpy(text," Days Ago");
+    }
   }
 
   if (effectiveNum == displayNum) { return; }
@@ -245,7 +259,9 @@ void updateTimeDisplay(int num){
 
   canvas.fillRect(0,36, 128, 64, 0x0);
   ssd1306_setFixedFont(ssd1306xled_font8x16);
-  canvas.printFixed(10, 36, numStr, STYLE_BOLD );
+  
+  int paddingLeft = (128-strlen(numStr)*8 ) / 2;
+  canvas.printFixed(paddingLeft, 36, numStr, STYLE_BOLD );
   canvas.blt(0,0);
 }
 
