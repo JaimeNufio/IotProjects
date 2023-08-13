@@ -15,19 +15,25 @@ ESP8266WiFiMulti WiFiMulti;
 bool isDown = false;
 unsigned int lastPressed = 0;
 unsigned int checked = 0;
+unsigned int currentTimestamp = 0;
 unsigned int lastInteractionTimestamp = 0;
 
 const char* ntpServer = "pool.ntp.org";
-const int timeZone = -5;  // -5 for Eastern Standard Time (EST)
+const int timeZone = 0;  // -5 for Eastern Standard Time (EST)
 WiFiUDP udp;
-
-NTPClient timeClient(udp, ntpServer, -5, 0);
-
+NTPClient timeClient(udp, ntpServer, timeZone, 0);
 WiFiClient client;
-
 HTTPClient http;
-String serverName = "http://192.168.1.158:3000"; 
+String serverName = "http://192.168.1.158:3000"; // the node server. 
 
+// interval information for getting the time again.
+const unsigned long interval = 15000;  // 3 seconds in milliseconds
+unsigned long previousMillis = 0;
+
+int displayNum = 0;
+
+uint8_t buffer[128*64];
+NanoCanvas canvas(128,64, buffer);
 
 unsigned long getNtpTime(){
   timeClient.update();
@@ -36,9 +42,16 @@ unsigned long getNtpTime(){
 }
 
 void setupLCD(){
-    ssd1306_setFixedFont(ssd1306xled_font6x8);
-    ssd1306_128x64_i2c_init();
-    ssd1306_clearScreen();
+  ssd1306_128x64_i2c_init();
+  ssd1306_setFixedFont(ssd1306xled_font6x8);
+  canvas.fillRect(0, 7, 128, 7, 0xFF);
+  canvas.fillRect(0, 10, 128, 10, 0xFF);
+  canvas.fillRect(0, 15, 128, 15, 0xFF);
+  canvas.blt(0,0);
+  canvas.printFixed(20, 3, " WATER TRACKER ", STYLE_BOLD );
+  ssd1306_setFixedFont(ssd1306xled_font6x8);
+  canvas.printFixed(0, 20, "Last Pressed:", STYLE_NORMAL );
+  canvas.blt(0,0);
 }
 
 void checkConnectionAndSendInteraction(){
@@ -67,7 +80,6 @@ void connectToWifi(){
   }
 }
 
-
 void sendRecallRequest(){  
   String routeName = "/recall";
   String deviceName= "?name=WATER";
@@ -88,8 +100,10 @@ void sendRecallRequest(){
 
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
         String payload = http.getString();
-        Serial.printf("\n[PAYLOAD - RECALL] %d\n\n",payload.c_str());
+        Serial.printf("\n[PAYLOAD - RECALL] %s\n\n",(payload.c_str()));
+        Serial.println(payload);
         lastInteractionTimestamp = atoi(payload.c_str());
+        printf("RECALLED last timestamp known: %d\n",lastInteractionTimestamp);
       }
     } else {
       Serial.printf("\n[HTTP - RECALL] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
@@ -167,36 +181,103 @@ void ButtonDown(){
   
 }
 
-unsigned long counter = 0;
-void updateTime(){
-  counter++;
+void updateTimeTick(){
 
-  // Serial.println(counter);
-  if (counter < 50) {return;} else {counter = 0;}
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= interval) { previousMillis = currentMillis;} 
+  else {return;}
+
+  updateTime();
+}
+
+void updateTime(){
   if (WiFiMulti.run() == WL_CONNECTED) {
     unsigned long ntpTime = getNtpTime();
     if (ntpTime != 0) {
-      Serial.printf("Latest Timestamp:%d\n",ntpTime);
-      Serial.printf("Difference:%d\n",(ntpTime-lastInteractionTimestamp));
+      Serial.printf("Fetched Timestamp: %d\n",ntpTime);
+      Serial.printf("Difference: %d\n",(ntpTime-lastInteractionTimestamp));
+      currentTimestamp = ntpTime;
     } else {
       Serial.println("Failed to get timestamp!");
-      // delay(500);
-      // updateTime();
+      updateTime();
     }
+  }else{
+    Serial.println("Failed to get timestamp, not connected to internet!");
+    delay(1000);
+    updateTime();
   }
+}
+
+void updateTimeDisplay(int num){  
+
+  char text[] = "";
+  int effectiveNum = num;
+
+  if (num < 3){
+    num = 0;
+    strcpy(text," Moments Ago");
+  }else if (num < 60){ // less than a minute
+    strcpy(text," Seconds Ago");
+    effectiveNum = num;
+  }else if (num < 60*60){ //less than an hour
+    strcpy(text," Minutes Ago");
+    effectiveNum = trunc(num/60);
+  }else if (num < 60*60*24){
+    strcpy(text," Hours Ago");
+    effectiveNum = trunc(num/60/60);
+  }else{
+    strcpy(text," Days Ago");
+    effectiveNum = trunc(num/60/60/24);
+  }
+
+  if (effectiveNum == displayNum) { return; }
+  displayNum = effectiveNum;
+
+    char numStr[64];
+    itoa(effectiveNum,numStr,10);
+
+  if (num > 0){
+    strcat(numStr,text);
+  }else{
+    strcpy(numStr,text);
+  }
+
+  canvas.fillRect(0,36, 128, 64, 0x0);
+  ssd1306_setFixedFont(ssd1306xled_font8x16);
+  canvas.printFixed(10, 36, numStr, STYLE_BOLD );
+  canvas.blt(0,0);
 }
 
 void setup() {
   pinMode(D4, INPUT_PULLUP); //D4
+  setupLCD();
   Serial.begin(115200);
+  
+  canvas.fillRect(0,36, 128, 64, 0x0);
+  ssd1306_setFixedFont(ssd1306xled_font8x16);
+  canvas.printFixed(10, 36, "Connecting...", STYLE_BOLD );
+  canvas.blt(0,0);
+
   connectToWifi();
-  lastPressed = millis();
+  updateTime();
+
+  canvas.fillRect(0,36, 128, 64, 0x0);
+  ssd1306_setFixedFont(ssd1306xled_font8x16);
+  // canvas.printFixed(10, 36, numStr, STYLE_BOLD );
+  canvas.blt(0,0);
 }
 
 void loop() {
 
-  delay(100);
+  updateTimeTick();
+
+  int sinceLastInteraction = currentTimestamp - lastInteractionTimestamp;
+  updateTimeDisplay(sinceLastInteraction); 
+  // printf("sinceLastInteraction: %d\n",sinceLastInteraction);
+  // printf("currentTimestamp: %d\n",currentTimestamp);
+  // printf("lastInteractionTimestamp: %d\n",lastInteractionTimestamp);
   ButtonDown();
-  updateTime();
- 
+  delay(100);
+
 }
