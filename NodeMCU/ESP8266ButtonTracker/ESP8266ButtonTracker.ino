@@ -18,7 +18,7 @@ unsigned int lastInteractionTimestamp = 0;
 WiFiClient client;
 HTTPClient http;
 ESP8266WiFiMulti WiFiMulti;
-String serverName = "http://192.168.1.158:3000"; // the node server. 
+String serverName = "http://192.168.1.156:3000"; // the node server. 
 
 // wifi, but for getting time from NTP server
 const char* ntpServer = "pool.ntp.org";
