@@ -48,11 +48,13 @@ void setupLCD(){
   canvas.fillRect(0, 8, 128, 8, 0xFF);
   canvas.fillRect(0, 15, 128, 15, 0xFF);
   canvas.blt(0,0);
-    
-  int paddingLeft = (128-strlen(" WATER TRACKER ")*6 ) / 2;
-  canvas.printFixed(paddingLeft, 3, " WATER TRACKER ", STYLE_BOLD );
+  
+  char* TITLE = " PLANT CARE ";
+
+  int paddingLeft = (128-strlen(TITLE)*6 ) / 2;
+  canvas.printFixed(paddingLeft, 3, TITLE, STYLE_BOLD );
   ssd1306_setFixedFont(ssd1306xled_font6x8);
-  canvas.printFixed(0, 20, "Last Pressed:", STYLE_NORMAL );
+  canvas.printFixed(0, 20, "Last Watered:", STYLE_NORMAL );
   canvas.blt(0,0);
 }
 
